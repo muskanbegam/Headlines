@@ -33,7 +33,6 @@ def allowed_file(filename):
            filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 __version__ = "1.0.0"
-app.secret_key = os.getenv('SECRET_KEY', secrets.token_hex(32))
 
 #################################
 # ── PostgreSQL Config ──────
@@ -54,6 +53,7 @@ def get_database_uri():
     return "postgresql://postgres:%28muskan%29@localhost:5432/newsight_db"
 
 app = Flask(__name__)
+app.secret_key = os.getenv('SECRET_KEY', secrets.token_hex(32))
 app.config['SQLALCHEMY_DATABASE_URI'] = get_database_uri()
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
