@@ -5,10 +5,18 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Headlines</title>
-  <!-- Replace with your Render URL -->
-  <link rel="icon" href="https://your-app-name.onrender.com/static/logo.png" type="image/png">
-  <link rel="apple-touch-icon" href="https://your-app-name.onrender.com/static/logo.png">
-  <link rel="manifest" href="https://your-app-name.onrender.com/static/manifest.json">
+<head>
+  <title>Headlines</title>
+  
+  <!-- Standard Favicon (works for browsers & desktop shortcuts) -->
+  <link rel="icon" href="{{ url_for('static', filename='logo.png') }}" type="image/png">
+  
+  <!-- Apple Touch Icon (for iOS home screen shortcuts) -->
+  <link rel="apple-touch-icon" href="{{ url_for('static', filename='logo.png') }}">
+  
+  <!-- Legacy .ico fallback (optional) -->
+  <link rel="shortcut icon" href="{{ url_for('static', filename='logo.ico') }}" type="image/x-icon">
+</head>
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
 S
