@@ -309,18 +309,18 @@ def admin_dashboard():
 if __name__ == "__main__":
     print("👋 STARTING MAIN")
     
-    # After db = SQLAlchemy(app)
-with app.app_context():
-    try:
-        print("⏳ Creating database tables...")
-        db.create_all()
-        print("✅ Database tables created successfully")
-    except Exception as e:
-        print(f"❌ Error creating tables: {str(e)}")
-        # Fallback to SQLite if PostgreSQL fails
-        app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///fallback.db'
-        db.create_all()
-        print("⚠️ Using SQLite fallback database")
+        # After db = SQLAlchemy(app)
+    with app.app_context():
+        try:
+            print("⏳ Creating database tables...")
+            db.create_all()
+            print("✅ Database tables created successfully")
+        except Exception as e:
+            print(f"❌ Error creating tables: {str(e)}")
+            # Fallback to SQLite if PostgreSQL fails
+            app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///fallback.db'
+            db.create_all()
+            print("⚠️ Using SQLite fallback database")
 
     # Start Flask app
     port = int(os.environ.get("PORT", 5000))
