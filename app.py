@@ -21,6 +21,8 @@ from bs4 import BeautifulSoup
 import requests
 from datetime import datetime
 from apscheduler.schedulers.background import BackgroundScheduler
+import secrets  # This is the critical missing import
+from datetime import timedelta  # Add this import
 
 
 from dateutil import parser as dtparser          # pip install python-dateutil
@@ -41,13 +43,15 @@ import os
 from urllib.parse import quote_plus
 
 def get_database_uri():
-    # Get DATABASE_URL from environment or use local fallback
     db_url = os.getenv('DATABASE_URL')
-    if db_url:
-        # Handle both postgres:// and postgresql:// formats
-        if db_url.startswith('postgres://'):
-            return db_url.replace('postgres://', 'postgresql://', 1)
-        return db_url
+    if not db_url:
+        return "postgresql://postgres:%28muskan%29@localhost:5432/newsight_db"
+    
+    # Handle Heroku-style postgres:// URLs
+    if db_url.startswith('postgres://'):
+        db_url = db_url.replace('postgres://', 'postgresql://', 1)
+    
+    return db_url
     
     # Local development fallback (with URL-encoded password)
     return "postgresql://postgres:%28muskan%29@localhost:5432/newsight_db"
@@ -77,11 +81,9 @@ if not app.debug:
         JSONIFY_PRETTYPRINT_REGULAR=False  # Disable pretty print in production
     )
 
+
 # Initialize extensions
 db = SQLAlchemy(app)
-scheduler = APScheduler()
-scheduler.init_app(app)
-
 #################################
 # ── Models ─────────────────
 #################################
@@ -212,12 +214,21 @@ def scheduled_scrape():
         db.session.commit()
         print("✅ Scraping finished and content saved.")
 
-# Correct Scheduler setup
-scheduler = BackgroundScheduler()
-scheduler.start()
+# Initialize APScheduler
+scheduler = APScheduler()
+scheduler.init_app(app)
 
-# Add the job correctly
-scheduler.add_job(func=scheduled_scrape, trigger='cron', hour=8, minute=10 )
+# Add the scheduled job with required ID
+scheduler.add_job(
+    id='news_scraping_job',  # Required unique identifier
+    func=scheduled_scrape,
+    trigger='cron',
+    hour=8,
+    minute=10
+)
+
+# Start the scheduler
+scheduler.start()
 #################################
 # ── Routes ────────────────
 #################################
@@ -302,7 +313,12 @@ if __name__ == "__main__":
     print("👋 STARTING MAIN")
     
     with app.app_context():
+        # Initialize database
         try:
+            # Create tables if they don't exist
+            db.create_all()
+            print("✅ Database tables verified/created")
+            
             # Test database connection
             db.engine.connect()
             print("✅ Successfully connected to database")
@@ -311,11 +327,16 @@ if __name__ == "__main__":
             # Fallback to SQLite if production DB fails
             app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///fallback.db'
             print("⚠️ Falling back to SQLite database")
-            db.create_all()
-        
-        # Configure scheduler only in production or main process
-    if not app.debug or os.environ.get('WERKZEUG_RUN_MAIN') == 'true':
-            scheduler = BackgroundScheduler()
+            try:
+                db.create_all()
+            except Exception as e:
+                print(f"❌ SQLite fallback failed: {e}")
+                raise
+
+    # Scheduler configuration - only initialize once
+    if not scheduler.running:
+        try:
+            # Add the scheduled job
             scheduler.add_job(
                 func=scheduled_scrape,
                 trigger='cron',
@@ -324,8 +345,13 @@ if __name__ == "__main__":
                 id='news_scraper_job',
                 replace_existing=True
             )
-            scheduler.start()
-            print("✅ Scheduler started with daily scraping job")
+            
+            # Start the scheduler if not running
+            if not scheduler.running:
+                scheduler.start()
+                print("✅ Scheduler started with daily scraping job")
+        except Exception as e:
+            print(f"❌ Scheduler configuration failed: {e}")
 
     # Start Flask app
     port = int(os.environ.get("PORT", 5000))
