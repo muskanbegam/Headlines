@@ -8,14 +8,20 @@
 <head>
   <title>Headlines</title>
   
-  <!-- Standard Favicon (works for browsers & desktop shortcuts) -->
-  <link rel="icon" href="{{ url_for('static', filename='logo.png') }}" type="image/png">
-  
-  <!-- Apple Touch Icon (for iOS home screen shortcuts) -->
-  <link rel="apple-touch-icon" href="{{ url_for('static', filename='logo.png') }}">
-  
-  <!-- Legacy .ico fallback (optional) -->
-  <link rel="shortcut icon" href="{{ url_for('static', filename='logo.ico') }}" type="image/x-icon">
+<!-- Standard Favicon (works for browsers & desktop shortcuts) -->
+<link rel="icon" href="{{ url_for('static', filename='logo.png') }}" type="image/png">
+
+<!-- Apple Touch Icon (for iOS home screen shortcuts) -->
+<link rel="apple-touch-icon" href="{{ url_for('static', filename='logo.png') }}">
+
+<!-- Android Web App Manifest -->
+<link rel="manifest" href="{{ url_for('static', filename='manifest.json') }}">
+
+<!-- Legacy .ico fallback (optional) -->
+<link rel="shortcut icon" href="{{ url_for('static', filename='logo.ico') }}" type="image/x-icon">
+
+<!-- Theme Color for Android -->
+<meta name="theme-color" content="#ffffff">
 </head>
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
