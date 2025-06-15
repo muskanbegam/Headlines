@@ -1,10 +1,11 @@
 <!DOCTYPE html>
 <html lang="en" class="bg-red-50 h-full">
+
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Headlines</title>
-<link rel="icon" href="{{ url_for('static', filename='logo.ico') }}" type="image/x-icon">
+  <link rel="manifest" href="{{ url_for('static', filename='manifest.json') }}">
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
 
@@ -12,7 +13,8 @@
 
   <!-- Hamburger Button -->
   <button id="menuBtn" class="fixed top-4 right-4 p-2 rounded text-white z-50" aria-label="Open menu">
-    <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
+    <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" stroke-linecap="round"
+      stroke-linejoin="round">
       <path d="M4 6h16M4 12h16M4 18h16" />
     </svg>
   </button>
@@ -23,16 +25,16 @@
     <div id="menuOverlay" class="absolute inset-0 bg-black bg-opacity-60  transition-opacity duration-300"></div>
 
     <!-- Side panel -->
-    <div class="absolute top-0 right-0 w-64 h-full bg-black/80 shadow-lg transform translate-x-full transition-transform duration-300 flex flex-col items-start pt-20 px-6">
+    <div
+      class="absolute top-0 right-0 w-64 h-full bg-black/80 shadow-lg transform translate-x-full transition-transform duration-300 flex flex-col items-start pt-20 px-6">
       {% if so == 0 %}
-      <a href="{{ url_for('login') }}"
-         class="text-lg font-semibold text-white hover:text-red-600 transition mb-4">
-         Sign In
+      <a href="{{ url_for('login') }}" class="text-lg font-semibold text-white hover:text-red-600 transition mb-4">
+        Sign In
       </a>
       {% else %}
       <a href="{{ url_for('loggedIn', so=0) }}"
-         class="text-lg font-semibold text-black hover:text-red-600 transition mb-4">
-         Log Out
+        class="text-lg font-semibold text-black hover:text-red-600 transition mb-4">
+        Log Out
       </a>
       {% endif %}
     </div>
@@ -48,18 +50,20 @@
       </section>
 
       <!-- Text Section -->
-      <section class="flex flex-col justify-center px-4 sm:px-6 lg:px-8 py-6 lg:w-1/2 w-full h-[60vh] lg:h-full bg-black max-w-3xl lg:max-w-none mx-auto lg:mx-0">
+      <section
+        class="flex flex-col justify-center px-4 sm:px-6 lg:px-8 py-6 lg:w-1/2 w-full h-[60vh] lg:h-full bg-black max-w-3xl lg:max-w-none mx-auto lg:mx-0">
         <h1 class="text-2xl sm:text-3xl lg:text-5xl font-extrabold mb-4 sm:mb-6 leading-tight text-white mt-4">
           {{ data[i].heading }}
         </h1>
         <h2 class="text-lg sm:text-xl lg:text-3xl font-semibold mb-6 sm:mb-8 leading-snug text-white">
           {{ data[i].subheading }}
         </h2>
-        <p class="text-white text-sm sm:text-base lg:text-lg leading-relaxed mb-8 sm:mb-12 lg:max-w-full sm:max-w-prose">
+        <p
+          class="text-white text-sm sm:text-base lg:text-lg leading-relaxed mb-8 sm:mb-12 lg:max-w-full sm:max-w-prose">
           {{ data[i].content }}
         </p>
         <button onclick="window.open('{{ data[i].link }}', '_blank')"
-                class="w-full max-w-full sm:max-w-xs bg-red-600 text-white py-3 rounded-md hover:bg-red-700 transition font-semibold tracking-wide">
+          class="w-full max-w-full sm:max-w-xs bg-red-600 text-white py-3 rounded-md hover:bg-red-700 transition font-semibold tracking-wide">
           Learn More
         </button>
       </section>
@@ -101,4 +105,5 @@
   </script>
 
 </body>
+
 </html>
