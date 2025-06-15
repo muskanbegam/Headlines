@@ -3,12 +3,12 @@
   "short_name": "Headlines",
   "icons": [
     {
-      "src": "{{ url_for('static', filename='logo-192x192.png') }}",
+      "src": "{{ url_for('static', filename='logo.png') }}",
       "sizes": "192x192",
       "type": "image/png"
     },
     {
-      "src": "{{ url_for('static', filename='logo-512x512.png') }}",
+      "src": "{{ url_for('static', filename='logo.png') }}",
       "sizes": "512x512",
       "type": "image/png"
     }
