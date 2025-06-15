@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NewSight - Admin Dashboard</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<body class="bg-gray-50 min-h-screen">
+
+  <header
+    class="flex flex-col md:flex-row items-center justify-between bg-red-600 text-white px-4 md:px-8 py-4 shadow-md">
+    <!-- Brand / Title -->
+    <div class="flex items-center gap-4 mb-4 md:mb-0">
+      <h1 class="text-2xl font-bold">Admin Dashboard</h1>
+
+    </div>
+
+    <!-- Action Buttons -->
+     <div>
+      <button onclick="window.location.href=`{{ url_for('new_post') }}`"
+          class="flex items-center justify-center px-4 py-2 bg-white text-red-600 font-semibold rounded-lg hover:bg-red-100 transition">
+        New Post
+      </button>
+    </div>
+  </header>
+
+
+  {% for i in range (0, length) %}
+  <main class="p-4 md:p-8 max-w-6xl mx-auto">
+    <section class="bg-white rounded-lg shadow-md p-4 md:p-6 min-h-[300px] flex flex-col md:flex-row relative">
+      <!-- Delete button - properly visible on all screens -->
+      <button onclick="window.location.href=`{{ url_for('delete' ,id=data[i].id)}}`"
+        class="absolute top-3 right-1 z-10 bg-white p-1 rounded-full shadow-sm hover:shadow-md text-gray-400 hover:text-red-500 transition-all">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+        </svg>
+      </button>
+
+      <!-- Left side - Image -->
+      <div class="w-full md:w-1/3 mb-4 md:mb-0 md:mr-6 relative">
+        <img src="{{ data[i].image}}" alt="Operation Shield mock drill"
+          class="w-full h-48 md:h-full object-cover rounded-lg">
+      </div>
+
+      <!-- Right side - Content -->
+      <div class="w-full md:w-2/3 flex flex-col">
+        <!-- Location tag above heading -->
+        <div class="text-xs font-semibold text-gray-500 mb-1">{{ data[i].location }}
+        </div>
+
+        <!-- Heading -->
+        <h2 class="text-lg md:text-xl font-bold text-gray-800 mb-2">{{ data[i].heading }}</h2>
+
+        <!-- Subheading/author line -->
+        <p class="text-sm text-gray-500 mb-3">
+          {{ data[i].subheading }}
+        </p>
+
+        <!-- Paragraph content -->
+        <p class="text-gray-700 mb-4 text-sm md:text-base"> {{ data[i].content }} </p>
+
+        <!-- Read more link -->
+        <div class="mt-auto">
+          <a href="{{ data[i].link }}" target="_blank" class="text-red-600 font-semibold">read more</a>
+        </div>
+      </div>
+    </section>
+  </main>
+  {% endfor %}
+</body>
+
+</html>

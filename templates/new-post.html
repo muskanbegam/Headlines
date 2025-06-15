@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>NewSight - New Post</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<body class="bg-gray-50 min-h-screen p-6">
+
+  <header class="flex items-center justify-between bg-red-600 text-white px-8 py-4 shadow-md rounded-lg">
+    <h1 class="text-2xl font-bold">Create New Post</h1>
+    <a href="{{url_for('admin_dashboard')}}" class="text-white hover:underline font-semibold">Back to Dashboard</a>
+  </header>
+
+  <main class="max-w-3xl mx-auto mt-8 bg-white rounded-xl shadow-md p-8">
+    <form id="postForm" action="/new-post" method="POST" class="space-y-6" novalidate>
+      <div>
+        <label for="image" class="block text-gray-700 font-medium mb-2">Image</label>
+        <input type="text" id="image" name="image" placeholder="Enter image URL"
+          class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:border-red-500" />
+        <p id="image-error" class="text-sm text-red-500 mt-1 hidden">Image URL is required.</p>
+      </div>
+
+      <div>
+        <label for="heading" class="block text-gray-700 font-medium mb-2">Heading</label>
+        <input type="text" id="heading" name="heading"
+          class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:border-red-500" />
+        <p id="headingCount" class="text-sm text-gray-500 mt-1">0 / 111</p>
+        <p id="heading-error" class="text-sm text-red-500 mt-1 hidden">Heading is required and must not exceed 111 characters.</p>
+      </div>
+
+      <div>
+        <label for="subheading" class="block text-gray-700 font-medium mb-2">Subheading</label>
+        <input type="text" id="subheading" name="subheading"
+          class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:border-red-500" />
+        <p id="subheadingCount" class="text-sm text-gray-500 mt-1">0 / 54</p>
+        <p id="subheading-error" class="text-sm text-red-500 mt-1 hidden">Subheading is required and must not exceed 54 characters.</p>
+      </div>
+
+      <div>
+        <label for="content" class="block text-gray-700 font-medium mb-2">Content</label>
+        <textarea id="content" name="content" rows="4"
+          class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:border-red-500"></textarea>
+        <p id="charCount" class="text-sm text-gray-500 mt-1">0 / 427</p>
+        <p id="error" class="text-sm text-red-500 mt-1 hidden">Content is required and must not exceed 427 characters.</p>
+      </div>
+
+      <div>
+        <label for="link" class="block text-gray-700 font-medium mb-2">Link to Page</label>
+        <input type="url" id="link" name="link"
+          class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:border-red-500" />
+        <p id="link-error" class="text-sm text-red-500 mt-1 hidden">Link is required.</p>
+      </div>
+
+      <div>
+        <label for="location" class="block text-gray-700 font-medium mb-2">Location</label>
+        <input type="text" id="location" name="location"
+          class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:border-red-500" />
+        <p id="location-error" class="text-sm text-red-500 mt-1 hidden">Location is required.</p>
+      </div>
+
+      <button type="submit"
+        class="w-full bg-red-600 text-white font-semibold py-3 rounded-lg hover:bg-red-700 transition">Post</button>
+    </form>
+  </main>
+
+  <script>
+    const form = document.getElementById('postForm');
+
+    const inputs = {
+      image: document.getElementById('image'),
+      heading: document.getElementById('heading'),
+      subheading: document.getElementById('subheading'),
+      content: document.getElementById('content'),
+      link: document.getElementById('link'),
+      location: document.getElementById('location')
+    };
+
+    const errors = {
+      image: document.getElementById('image-error'),
+      heading: document.getElementById('heading-error'),
+      subheading: document.getElementById('subheading-error'),
+      content: document.getElementById('error'),
+      link: document.getElementById('link-error'),
+      location: document.getElementById('location-error')
+    };
+
+    const counts = {
+      heading: document.getElementById('headingCount'),
+      subheading: document.getElementById('subheadingCount'),
+      content: document.getElementById('charCount')
+    };
+
+    const MAX = {
+      heading: 111,
+      subheading: 54,
+      content: 427
+    };
+
+    // Update counts and border/error on input
+    function updateCountAndError(field) {
+      const val = inputs[field].value;
+      const len = val.length;
+
+      if (counts[field]) {
+        counts[field].textContent = `${len} / ${MAX[field]}`;
+      }
+
+      if ((field === 'heading' || field === 'subheading' || field === 'content') && len > MAX[field]) {
+        errors[field].textContent = `${field.charAt(0).toUpperCase() + field.slice(1)} must not exceed ${MAX[field]} characters.`;
+        errors[field].classList.remove('hidden');
+        inputs[field].classList.add('border-red-500');
+      } else if ((field === 'heading' || field === 'subheading' || field === 'content') && len <= MAX[field]) {
+        errors[field].classList.add('hidden');
+        inputs[field].classList.remove('border-red-500');
+      }
+    }
+
+    // Attach input event listeners for heading, subheading, content to update counts
+    ['heading', 'subheading', 'content'].forEach(field => {
+      inputs[field].addEventListener('input', () => {
+        updateCountAndError(field);
+      });
+    });
+
+    // On submit, validate all fields are non-empty and within length limits
+    form.addEventListener('submit', (e) => {
+      let formIsValid = true;
+
+      // Validate required and non-empty
+      for (const field in inputs) {
+        const val = inputs[field].value.trim();
+
+        if (!val) {
+          errors[field].textContent = `${field.charAt(0).toUpperCase() + field.slice(1)} is required.`;
+          errors[field].classList.remove('hidden');
+          inputs[field].classList.add('border-red-500');
+          formIsValid = false;
+        } else {
+          errors[field].classList.add('hidden');
+          inputs[field].classList.remove('border-red-500');
+        }
+      }
+
+      // Validate lengths for heading, subheading, content
+      if (inputs.heading.value.length > MAX.heading) {
+        errors.heading.textContent = `Heading must not exceed ${MAX.heading} characters.`;
+        errors.heading.classList.remove('hidden');
+        inputs.heading.classList.add('border-red-500');
+        formIsValid = false;
+      }
+      if (inputs.subheading.value.length > MAX.subheading) {
+        errors.subheading.textContent = `Subheading must not exceed ${MAX.subheading} characters.`;
+        errors.subheading.classList.remove('hidden');
+        inputs.subheading.classList.add('border-red-500');
+        formIsValid = false;
+      }
+      if (inputs.content.value.length > MAX.content) {
+        errors.content.textContent = `Content must not exceed ${MAX.content} characters.`;
+        errors.content.classList.remove('hidden');
+        inputs.content.classList.add('border-red-500');
+        formIsValid = false;
+      }
+
+      if (!formIsValid) {
+        e.preventDefault();
+        alert('Please fill all required fields and fix any errors.');
+      }
+    });
+
+    // Initialize counts on page load
+    ['heading', 'subheading', 'content'].forEach(updateCountAndError);
+  </script>
+
+</body>
+
+</html>
