@@ -7,7 +7,8 @@ logging.basicConfig(level=logging.INFO)
 #################################
 import os
 import re
-
+from dotenv import load_dotenv
+load_dotenv()  # Load .env file
 #################################
 # ── Third‑Party ───────────────
 #################################
@@ -32,28 +33,52 @@ def allowed_file(filename):
            filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 __version__ = "1.0.0"
-
+app.secret_key = os.getenv('SECRET_KEY', secrets.token_hex(32))
 
 #################################
 # ── PostgreSQL Config ──────
-#################################
-PG_USER     = os.getenv("PGUSER",     "postgres")
-PG_PASSWORD = os.getenv("PGPASSWORD", "(muskan)")
-PG_HOST     = os.getenv("PGHOST",     "localhost")
-PG_PORT     = os.getenv("PGPORT",     "5432")
-PG_DB       = os.getenv("PGDATABASE", "newsight_db")
 
-#################################
-# ── Flask & SQLAlchemy setup ───
-#################################
+import os
+from urllib.parse import quote_plus
+
+def get_database_uri():
+    # Get DATABASE_URL from environment or use local fallback
+    db_url = os.getenv('DATABASE_URL')
+    if db_url:
+        # Handle both postgres:// and postgresql:// formats
+        if db_url.startswith('postgres://'):
+            return db_url.replace('postgres://', 'postgresql://', 1)
+        return db_url
+    
+    # Local development fallback (with URL-encoded password)
+    return "postgresql://postgres:%28muskan%29@localhost:5432/newsight_db"
+
 app = Flask(__name__)
-app.config["SQLALCHEMY_DATABASE_URI"] = (
-    f"postgresql+psycopg2://{PG_USER}:{PG_PASSWORD}@{PG_HOST}:{PG_PORT}/{PG_DB}")
-app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+app.config['SQLALCHEMY_DATABASE_URI'] = get_database_uri()
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
+    'pool_pre_ping': True,
+    'pool_recycle': 300,
+    'pool_timeout': 30
+}
+# Security Configuration
+app.secret_key = os.getenv('SECRET_KEY', secrets.token_hex(32))  # Set secret key from env or generate
+app.config.update(
+    SESSION_COOKIE_SECURE=True,    # Only send cookies over HTTPS
+    SESSION_COOKIE_HTTPONLY=True,  # Prevent client-side JS cookie access
+    SESSION_COOKIE_SAMESITE='Lax', # CSRF protection
+    PERMANENT_SESSION_LIFETIME=timedelta(days=1)  # Session expiration
+)
 
-# ── init extensions
+# Additional Production Recommendations
+if not app.debug:
+    app.config.update(
+        PREFERRED_URL_SCHEME='https',  # Force HTTPS URLs
+        JSONIFY_PRETTYPRINT_REGULAR=False  # Disable pretty print in production
+    )
 
-db        = SQLAlchemy(app)
+# Initialize extensions
+db = SQLAlchemy(app)
 scheduler = APScheduler()
 scheduler.init_app(app)
 
@@ -275,7 +300,33 @@ def admin_dashboard():
 #################################
 if __name__ == "__main__":
     print("👋 STARTING MAIN")
+    
     with app.app_context():
-        db.create_all()
-    port = int(os.environ.get("PORT", 5000))  # Use Render's PORT or default to 5000
+        try:
+            # Test database connection
+            db.engine.connect()
+            print("✅ Successfully connected to database")
+        except Exception as e:
+            print(f"❌ Database connection failed: {e}")
+            # Fallback to SQLite if production DB fails
+            app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///fallback.db'
+            print("⚠️ Falling back to SQLite database")
+            db.create_all()
+        
+        # Configure scheduler only in production or main process
+    if not app.debug or os.environ.get('WERKZEUG_RUN_MAIN') == 'true':
+            scheduler = BackgroundScheduler()
+            scheduler.add_job(
+                func=scheduled_scrape,
+                trigger='cron',
+                hour=8,
+                minute=10,
+                id='news_scraper_job',
+                replace_existing=True
+            )
+            scheduler.start()
+            print("✅ Scheduler started with daily scraping job")
+
+    # Start Flask app
+    port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port)
