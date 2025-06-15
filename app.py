@@ -306,52 +306,24 @@ def admin_dashboard():
     content_db = Content.query.all()
     return render_template("admin-dashboard.html", data=content_db, length=len(content_db))
 
-#################################
-# ── Main ──────────────────
-#################################
 if __name__ == "__main__":
     print("👋 STARTING MAIN")
     
     with app.app_context():
-        # Initialize database
+        # Create all database tables
         try:
-            # Create tables if they don't exist
             db.create_all()
-            print("✅ Database tables verified/created")
+            print("✅ Database tables created")
             
-            # Test database connection
-            db.engine.connect()
-            print("✅ Successfully connected to database")
+            # Test connection
+            db.session.execute("SELECT 1")
+            print("✅ Database connection successful")
         except Exception as e:
-            print(f"❌ Database connection failed: {e}")
+            print(f"❌ Database error: {e}")
             # Fallback to SQLite if production DB fails
             app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///fallback.db'
-            print("⚠️ Falling back to SQLite database")
-            try:
-                db.create_all()
-            except Exception as e:
-                print(f"❌ SQLite fallback failed: {e}")
-                raise
-
-    # Scheduler configuration - only initialize once
-    if not scheduler.running:
-        try:
-            # Add the scheduled job
-            scheduler.add_job(
-                func=scheduled_scrape,
-                trigger='cron',
-                hour=8,
-                minute=10,
-                id='news_scraper_job',
-                replace_existing=True
-            )
-            
-            # Start the scheduler if not running
-            if not scheduler.running:
-                scheduler.start()
-                print("✅ Scheduler started with daily scraping job")
-        except Exception as e:
-            print(f"❌ Scheduler configuration failed: {e}")
+            db.create_all()
+            print("⚠️ Using SQLite fallback")
 
     # Start Flask app
     port = int(os.environ.get("PORT", 5000))
