@@ -240,10 +240,6 @@ def scheduled_scrape():
             if inshorts_results:
                 db.session.bulk_insert_mappings(Content, inshorts_results)
             
-            # Cleanup old records (older than 7 days)
-            cutoff = datetime.utcnow() - timedelta(days=7)
-            deleted = db.session.query(Content).filter(Content.timestamp < cutoff).delete()
-            
             db.session.commit()
             logger.info(f"✅ Added {len(bbc_results)+len(inshorts_results)} new records, deleted {deleted} old ones")
             
