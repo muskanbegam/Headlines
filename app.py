@@ -224,7 +224,7 @@ scheduler.add_job(
     func=scheduled_scrape,
     trigger='cron',
     hour=8,
-    minute=40
+    minute=43
 )
 
 # Start the scheduler
