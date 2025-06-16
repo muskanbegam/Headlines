@@ -313,7 +313,6 @@ if __name__ == "__main__":
     with app.app_context():
         try:
             print("⏳ Creating database tables...")
-            db.drop_all()
             db.create_all()
             print("✅ Database tables created successfully")
         except Exception as e:
