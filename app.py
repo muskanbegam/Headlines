@@ -224,7 +224,7 @@ scheduler.add_job(
     func=scheduled_scrape,
     trigger='cron',
     hour=8,
-    minute=10
+    minute=40
 )
 
 # Start the scheduler
@@ -313,6 +313,7 @@ if __name__ == "__main__":
     with app.app_context():
         try:
             print("⏳ Creating database tables...")
+            db.drop_all()
             db.create_all()
             print("✅ Database tables created successfully")
         except Exception as e:
