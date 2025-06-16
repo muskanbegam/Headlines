@@ -1,17 +1,9 @@
 from __future__ import annotations
 import logging
-logging.basicConfig(level=logging.INFO)
-
-#################################
-# ── Standard Library ──────────
-#################################
+from logging.handlers import RotatingFileHandler
 import os
 import re
 from dotenv import load_dotenv
-load_dotenv()  # Load .env file
-#################################
-# ── Third‑Party ───────────────
-#################################
 from flask import Flask, render_template, request, redirect, url_for
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.orm import Mapped, mapped_column
@@ -19,43 +11,44 @@ from sqlalchemy import Integer, String, Float
 from flask_apscheduler import APScheduler
 from bs4 import BeautifulSoup
 import requests
-from datetime import datetime
+from datetime import datetime, timedelta
+import secrets
+from dateutil import parser as dtparser
+from geopy.geocoders import Nominatim
 from apscheduler.schedulers.background import BackgroundScheduler
-import secrets  # This is the critical missing import
-from datetime import timedelta  # Add this import
 
+# Load environment variables
+load_dotenv()
 
-from dateutil import parser as dtparser          # pip install python-dateutil
-from geopy.geocoders import Nominatim            # pip install geopy
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(levelname)s - %(message)s',
+    handlers=[
+        RotatingFileHandler('app.log', maxBytes=100000, backupCount=3),
+        logging.StreamHandler()
+    ]
+)
+logger = logging.getLogger(__name__)
 
+# Configuration
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
-
-def allowed_file(filename):
-    return '.' in filename and \
-           filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
-
 __version__ = "1.0.0"
 
-#################################
-# ── PostgreSQL Config ──────
-
-import os
-from urllib.parse import quote_plus
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 def get_database_uri():
     db_url = os.getenv('DATABASE_URL')
     if not db_url:
         return "postgresql://postgres:%28muskan%29@localhost:5432/newsight_db"
     
-    # Handle Heroku-style postgres:// URLs
     if db_url.startswith('postgres://'):
         db_url = db_url.replace('postgres://', 'postgresql://', 1)
     
     return db_url
-    
-    # Local development fallback (with URL-encoded password)
-    return "postgresql://postgres:%28muskan%29@localhost:5432/newsight_db"
 
+# Flask Application Setup
 app = Flask(__name__)
 app.secret_key = os.getenv('SECRET_KEY', secrets.token_hex(32))
 app.config['SQLALCHEMY_DATABASE_URI'] = get_database_uri()
@@ -65,28 +58,25 @@ app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
     'pool_recycle': 300,
     'pool_timeout': 30
 }
+
 # Security Configuration
-app.secret_key = os.getenv('SECRET_KEY', secrets.token_hex(32))  # Set secret key from env or generate
 app.config.update(
-    SESSION_COOKIE_SECURE=True,    # Only send cookies over HTTPS
-    SESSION_COOKIE_HTTPONLY=True,  # Prevent client-side JS cookie access
-    SESSION_COOKIE_SAMESITE='Lax', # CSRF protection
-    PERMANENT_SESSION_LIFETIME=timedelta(days=1)  # Session expiration
+    SESSION_COOKIE_SECURE=True,
+    SESSION_COOKIE_HTTPONLY=True,
+    SESSION_COOKIE_SAMESITE='Lax',
+    PERMANENT_SESSION_LIFETIME=timedelta(days=1)
 )
 
-# Additional Production Recommendations
 if not app.debug:
     app.config.update(
-        PREFERRED_URL_SCHEME='https',  # Force HTTPS URLs
-        JSONIFY_PRETTYPRINT_REGULAR=False  # Disable pretty print in production
+        PREFERRED_URL_SCHEME='https',
+        JSONIFY_PRETTYPRINT_REGULAR=False
     )
-
 
 # Initialize extensions
 db = SQLAlchemy(app)
-#################################
-# ── Models ─────────────────
-#################################
+
+# Models
 class Content(db.Model):
     id:         Mapped[int]   = mapped_column(Integer, primary_key=True)
     heading:    Mapped[str]   = mapped_column(String(250), unique=True, nullable=False)
@@ -105,22 +95,23 @@ class Users(db.Model):
     email:    Mapped[str] = mapped_column(String, nullable=False)
     password: Mapped[str] = mapped_column(String, nullable=False)
 
-
+# Helper Functions
 def get_lat_long(place: str) -> tuple[float | None, float | None]:
     if not place or place == "Unknown":
         return None, None
     try:
         geolocator = Nominatim(user_agent="newsight_app", timeout=10)
-        loc        = geolocator.geocode(place)
+        loc = geolocator.geocode(place)
         return (loc.latitude, loc.longitude) if loc else (None, None)
-    except Exception:
+    except Exception as e:
+        logger.error(f"Geocoding failed for {place}: {str(e)}")
         return None, None
-
 
 def get_bbc_full_article_content(article_url: str) -> str:
     try:
-        article_html = requests.get(article_url, timeout=10).text
-        article_soup = BeautifulSoup(article_html, "html.parser")
+        response = requests.get(article_url, timeout=10)
+        response.raise_for_status()
+        article_soup = BeautifulSoup(response.text, "html.parser")
         article_main = article_soup.find("main")
         if not article_main:
             return "Full article content not found."
@@ -128,110 +119,167 @@ def get_bbc_full_article_content(article_url: str) -> str:
         content = " ".join(p.get_text(strip=True) for p in paragraphs if p.get_text(strip=True))
         return content if content else "No detailed content available."
     except Exception as e:
-        logging.error(f"[BBC scrape error] {e}")
+        logger.error(f"[BBC scrape error] {e}")
         return "Error fetching full article."
 
-# The scheduled job function
-def scheduled_scrape():
-    with app.app_context():
-        print(f"[{datetime.now()}] Running scheduled scrape...")
-        
+# Scraping Functions
+def scrape_bbc_news():
+    results = []
+    try:
         bbc_url = "https://www.bbc.com/news"
-        bbc_html = requests.get(bbc_url).text
-        bbc_soup = BeautifulSoup(bbc_html, "html.parser")
+        response = requests.get(bbc_url, timeout=15)
+        response.raise_for_status()
+        bbc_soup = BeautifulSoup(response.text, "html.parser")
         bbc_cards = bbc_soup.find_all("div", class_="sc-cb78bbba-1 fYSNbR")
 
         for bbc_card in bbc_cards[:5]:
-            bbc_img_tag = bbc_card.find("div").find("img", class_="sc-d1200759-0 dvfjxj")
-            bbc_img_url = bbc_img_tag.get("src") if bbc_img_tag else "Image not found"
+            try:
+                bbc_img_tag = bbc_card.find("div").find("img", class_="sc-d1200759-0 dvfjxj")
+                bbc_img_url = bbc_img_tag.get("src") if bbc_img_tag else "Image not found"
 
-            bbc_heading = bbc_card.find("h2", class_="sc-9d830f2a-3 fWzToZ")
-            bbc_heading_text = bbc_heading.get_text(strip=True) if bbc_heading else "Untitled"
+                bbc_heading = bbc_card.find("h2", class_="sc-9d830f2a-3 fWzToZ")
+                bbc_heading_text = bbc_heading.get_text(strip=True) if bbc_heading else "Untitled"
 
-            bbc_meta_div = bbc_card.find("div", class_="sc-ac6bc755-0 kOnnpG")
-            bbc_date = bbc_meta_div.get_text(separator=" · ", strip=True) if bbc_meta_div else "Unknown metadata"
+                bbc_meta_div = bbc_card.find("div", class_="sc-ac6bc755-0 kOnnpG")
+                bbc_date = bbc_meta_div.get_text(separator=" · ", strip=True) if bbc_meta_div else "Unknown metadata"
 
-            bbc_date_span = bbc_card.find("span", class_="sc-ac6bc755-2 ivCQgh")
-            bbc_loc = bbc_date_span.get_text(strip=True) if bbc_date_span else "Unknown date"
+                bbc_date_span = bbc_card.find("span", class_="sc-ac6bc755-2 ivCQgh")
+                bbc_loc = bbc_date_span.get_text(strip=True) if bbc_date_span else "Unknown date"
 
+                anchor_tag = bbc_card.find_parent("a", href=True)
+                bbc_href = anchor_tag['href'] if anchor_tag else ""
+                bbc_external_url = "https://www.bbc.com" + bbc_href if bbc_href.startswith("/") else bbc_href
 
-            anchor_tag = bbc_card.find_parent("a", href=True)
-            bbc_href = anchor_tag['href'] if anchor_tag else ""
-            bbc_external_url = "https://www.bbc.com" + bbc_href if bbc_href.startswith("/") else bbc_href
+                bbc_content_text = get_bbc_full_article_content(bbc_external_url)
+                if len(bbc_content_text) > 424:
+                    bbc_content_text = bbc_content_text[:423] + '...'
+                bbc_lat, bbc_lon = get_lat_long(bbc_loc)
 
-            bbc_content_text = get_bbc_full_article_content(bbc_external_url)
-            if len(bbc_content_text) > 424:
-                bbc_content_text = bbc_content_text[:423] + '...'
-            bbc_lat, bbc_lon = get_lat_long(bbc_loc)
+                results.append({
+                    'heading': bbc_heading_text,
+                    'subheading': bbc_date,
+                    'content': bbc_content_text[:427],
+                    'link': bbc_external_url,
+                    'location': bbc_loc,
+                    'image': bbc_img_url,
+                    'latitude': bbc_lat,
+                    'longitude': bbc_lon,
+                    'timestamp': datetime.utcnow()
+                })
+            except Exception as e:
+                logger.error(f"Error processing BBC card: {str(e)}")
+                continue
+                
+    except Exception as e:
+        logger.error(f"BBC scraping failed: {str(e)}")
+    return results
 
-            db.session.add(Content(
-                heading=bbc_heading_text,
-                subheading=bbc_date,
-                content=bbc_content_text[:427],
-                link=bbc_external_url,
-                location=bbc_loc,
-                image=bbc_img_url,
-                latitude=bbc_lat,
-                longitude=bbc_lon,
-            ))
+def scrape_inshorts():
+    results = []
+    try:
         url = "https://inshorts.com/en/read"
-        html = requests.get(url).text
-        soup = BeautifulSoup(html, "html.parser")
-
+        response = requests.get(url, timeout=15)
+        response.raise_for_status()
+        soup = BeautifulSoup(response.text, "html.parser")
         cards = soup.find_all("div", class_="LUWdd1C_3UqqulVsopn0")
+
         for card in cards[:6]:
-            bg_div = card.find_previous_sibling("div").find("div", class_="GXPWASMx93K0ajwCIcCA")
-            img_url = "https://via.placeholder.com/300"
-            if bg_div and "style" in bg_div.attrs:
-                m = re.search(r'url\(([^)]+)\)', bg_div["style"])
-                if m:
-                    img_url = m.group(1).strip('"').strip("'")
+            try:
+                bg_div = card.find_previous_sibling("div").find("div", class_="GXPWASMx93K0ajwCIcCA")
+                img_url = "https://via.placeholder.com/300"
+                if bg_div and "style" in bg_div.attrs:
+                    m = re.search(r'url\(([^)]+)\)', bg_div["style"])
+                    if m:
+                        img_url = m.group(1).strip('"').strip("'")
 
-            heading = card.find("span", class_="ddVzQcwl2yPlFt4fteIE")
-            heading_text = heading.get_text(strip=True) if heading else "Untitled"
+                heading = card.find("span", class_="ddVzQcwl2yPlFt4fteIE")
+                heading_text = heading.get_text(strip=True) if heading else "Untitled"
 
-            date_span = card.find("span", class_="date")
-            date = date_span.get_text(strip=True) if date_span else "Unknown date"
+                date_span = card.find("span", class_="date")
+                date = date_span.get_text(strip=True) if date_span else "Unknown date"
 
-            content = card.find("div", class_="KkupEonoVHxNv4A_D7UG")
-            content_text = content.get_text(strip=True) if content else "No content"
+                content = card.find("div", class_="KkupEonoVHxNv4A_D7UG")
+                content_text = content.get_text(strip=True) if content else "No content"
 
-            source_link = card.find("a", class_="LFn0sRS51HkFD0OHeCdA")
-            external_url = source_link["href"] if source_link and source_link.has_attr("href") else "#"
-            lat, lon = get_lat_long("India")
+                source_link = card.find("a", class_="LFn0sRS51HkFD0OHeCdA")
+                external_url = source_link["href"] if source_link and source_link.has_attr("href") else "#"
+                lat, lon = get_lat_long("India")
 
-            db.session.add(Content(
-                heading=heading_text,
-                subheading=date,
-                content=content_text[:427],
-                link=external_url,
-                location="India",
-                image=img_url,
-                latitude=lat,
-                longitude=lon,
-            ))
+                results.append({
+                    'heading': heading_text,
+                    'subheading': date,
+                    'content': content_text[:427],
+                    'link': external_url,
+                    'location': "India",
+                    'image': img_url,
+                    'latitude': lat,
+                    'longitude': lon,
+                    'timestamp': datetime.utcnow()
+                })
+            except Exception as e:
+                logger.error(f"Error processing Inshorts card: {str(e)}")
+                continue
+                
+    except Exception as e:
+        logger.error(f"Inshorts scraping failed: {str(e)}")
+    return results
 
-        db.session.commit()
-        print("✅ Scraping finished and content saved.")
+def scheduled_scrape():
+    start_time = datetime.utcnow()
+    logger.info("🚀 Starting scheduled scrape...")
+    
+    try:
+        with app.app_context():
+            # Scrape both sources
+            bbc_results = scrape_bbc_news()
+            inshorts_results = scrape_inshorts()
+            
+            # Bulk insert for efficiency
+            if bbc_results:
+                db.session.bulk_insert_mappings(Content, bbc_results)
+            if inshorts_results:
+                db.session.bulk_insert_mappings(Content, inshorts_results)
+            
+            # Cleanup old records (older than 7 days)
+            cutoff = datetime.utcnow() - timedelta(days=7)
+            deleted = db.session.query(Content).filter(Content.timestamp < cutoff).delete()
+            
+            db.session.commit()
+            logger.info(f"✅ Added {len(bbc_results)+len(inshorts_results)} new records, deleted {deleted} old ones")
+            
+    except Exception as e:
+        logger.error(f"❌ Scraping failed: {str(e)}")
+        db.session.rollback()
+    finally:
+        db.session.remove()
+        logger.info(f"⏱️ Scraping completed in {(datetime.utcnow()-start_time).total_seconds():.2f}s")
 
-# Initialize APScheduler
-scheduler = APScheduler()
-scheduler.init_app(app)
+# Scheduler Setup (only for web service)
+if os.environ.get('WORKER_MODE') != 'true':
+    scheduler = APScheduler()
+    scheduler.init_app(app)
+    
+    if os.environ.get('FLASK_ENV') == 'development':
+        scheduler.add_job(
+            id='dev_scraping_job',
+            func=scheduled_scrape,
+            trigger='interval',
+            hours=1,
+            next_run_time=datetime.now()
+        )
+    else:
+        scheduler.add_job(
+            id='prod_scraping_job',
+            func=scheduled_scrape,
+            trigger='cron',
+            hour=9,
+            minute=1,
+            misfire_grace_time=3600
+        )
+    
+    scheduler.start()
 
-# Add the scheduled job with required ID
-scheduler.add_job(
-    id='news_scraping_job',  # Required unique identifier
-    func=scheduled_scrape,
-    trigger='cron',
-    hour=8,
-    minute=43
-)
-
-# Start the scheduler
-scheduler.start()
-#################################
-# ── Routes ────────────────
-#################################
+# Routes
 @app.route("/")
 def home():
     content_db = Content.query.order_by(Content.timestamp.desc()).all()
@@ -240,7 +288,7 @@ def home():
 @app.route("/login", methods=["GET", "POST"])
 def login():
     if request.method == "POST":
-        email    = request.form.get("email")
+        email = request.form.get("email")
         password = request.form.get("password")
         if email == "admin@gmail.com" and password == "(Adminnewsight.1)":
             content_db = Content.query.all()
@@ -259,8 +307,8 @@ def logged_in(so: int):
 @app.route("/signup", methods=["GET", "POST"])
 def signup():
     if request.method == "POST":
-        name     = request.form.get("name")
-        email    = request.form.get("email")
+        name = request.form.get("name")
+        email = request.form.get("email")
         password = request.form.get("password")
         db.session.add(Users(name=name, email=email, password=password))
         db.session.commit()
@@ -270,23 +318,23 @@ def signup():
 @app.route('/new-post', methods=["GET", "POST"])
 def new_post():
     if request.method == "POST":
-        image         = request.form.get("image")
-        heading       = request.form.get("heading")
-        subheading    = request.form.get("subheading")
-        content_text  = request.form.get("content")
-        link          = request.form.get("link")
+        image = request.form.get("image")
+        heading = request.form.get("heading")
+        subheading = request.form.get("subheading")
+        content_text = request.form.get("content")
+        link = request.form.get("link")
         location_name = request.form.get("location")
-        lat, lon      = get_lat_long(location_name)
+        lat, lon = get_lat_long(location_name)
 
         db.session.add(Content(
-            heading     = heading,
-            subheading  = subheading,
-            content     = content_text[:427],
-            link        = link,
-            location    = location_name,
-            image       = image,
-            latitude    = lat,
-            longitude   = lon,
+            heading=heading,
+            subheading=subheading,
+            content=content_text[:427],
+            link=link,
+            location=location_name,
+            image=image,
+            latitude=lat,
+            longitude=lon,
         ))
         db.session.commit()
         return redirect(url_for("home"))
@@ -306,22 +354,20 @@ def admin_dashboard():
     content_db = Content.query.all()
     return render_template("admin-dashboard.html", data=content_db, length=len(content_db))
 
+# Application Startup
 if __name__ == "__main__":
-    print("👋 STARTING MAIN")
+    logger.info("👋 Starting application...")
     
-        # After db = SQLAlchemy(app)
     with app.app_context():
         try:
-            print("⏳ Creating database tables...")
+            logger.info("⏳ Creating database tables...")
             db.create_all()
-            print("✅ Database tables created successfully")
+            logger.info("✅ Database tables created successfully")
         except Exception as e:
-            print(f"❌ Error creating tables: {str(e)}")
-            # Fallback to SQLite if PostgreSQL fails
+            logger.error(f"❌ Error creating tables: {str(e)}")
             app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///fallback.db'
             db.create_all()
-            print("⚠️ Using SQLite fallback database")
+            logger.warning("⚠️ Using SQLite fallback database")
 
-    # Start Flask app
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port)
