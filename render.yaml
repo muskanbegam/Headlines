@@ -5,18 +5,18 @@ services:
     buildCommand: pip install -r requirements.txt
     startCommand: gunicorn --worker-tmp-dir /dev/shm app:app
     envVars:
-      - key: FLASK_ENV
-        value: production
-      - key: WORKER_MODE
-        value: "false"
+      - key: DATABASE_URL
+        fromDatabase:
+          name: newsight-db
+          property: connectionString
 
   - type: worker
-    name: newsight-scraper
+    name: newsight-worker
     runtime: python
     buildCommand: pip install -r requirements.txt
     startCommand: python worker.py
     envVars:
-      - key: FLASK_ENV
-        value: production
-      - key: WORKER_MODE
-        value: "true"
+      - key: DATABASE_URL
+        fromDatabase:
+          name: newsight-db
+          property: connectionString

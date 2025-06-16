@@ -1,0 +1,185 @@
+2025-06-16 09:02:48,630 - INFO - Adding job tentatively -- it will be properly scheduled when the scheduler starts
+2025-06-16 09:02:48,638 - INFO - Added job "dev_scraping_job" to job store "default"
+2025-06-16 09:02:48,638 - INFO - Scheduler started
+2025-06-16 09:02:48,650 - INFO - Running job "dev_scraping_job (trigger: interval[1:00:00], next run at: 2025-06-16 10:02:48 IST)" (scheduled at 2025-06-16 09:02:48.630095+05:30)
+2025-06-16 09:02:48,947 - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5000
+ * Running on http://192.168.0.106:5000
+2025-06-16 09:02:48,949 - INFO - [33mPress CTRL+C to quit[0m
+2025-06-16 09:03:00,168 - ERROR - Job "dev_scraping_job (trigger: interval[1:00:00], next run at: 2025-06-16 10:02:48 IST)" raised an exception
+Traceback (most recent call last):
+  File "C:\Users\Admin\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\local-packages\Python311\site-packages\apscheduler\executors\base.py", line 131, in run_job
+    retval = job.func(*job.args, **job.kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Admin\Desktop\Application\News app\app.py", line 250, in scheduled_scrape
+    db.session.remove()
+  File "C:\Users\Admin\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\local-packages\Python311\site-packages\sqlalchemy\orm\scoping.py", line 260, in remove
+    if self.registry.has():
+       ^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Admin\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\local-packages\Python311\site-packages\sqlalchemy\util\_collections.py", line 643, in has
+    return self.scopefunc() in self.registry
+           ^^^^^^^^^^^^^^^^
+  File "C:\Users\Admin\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\local-packages\Python311\site-packages\flask_sqlalchemy\session.py", line 111, in _app_ctx_id
+    return id(app_ctx._get_current_object())  # type: ignore[attr-defined]
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Admin\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\local-packages\Python311\site-packages\werkzeug\local.py", line 519, in _get_current_object
+    raise RuntimeError(unbound_message) from None
+RuntimeError: Working outside of application context.
+
+This typically means that you attempted to use functionality that needed
+the current application. To solve this, set up an application context
+with app.app_context(). See the documentation for more information.
+2025-06-16 09:15:14,628 - INFO - Database tables created
+2025-06-16 09:15:14,645 - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5000
+ * Running on http://192.168.0.106:5000
+2025-06-16 09:15:14,647 - INFO - [33mPress CTRL+C to quit[0m
+2025-06-16 09:18:02,109 - INFO - Database tables created
+2025-06-16 09:18:02,144 - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5000
+ * Running on http://192.168.0.106:5000
+2025-06-16 09:18:02,144 - INFO - [33mPress CTRL+C to quit[0m
+2025-06-16 09:26:29,961 - INFO - Database tables initialized
+2025-06-16 09:26:29,975 - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5000
+ * Running on http://192.168.0.106:5000
+2025-06-16 09:26:29,975 - INFO - [33mPress CTRL+C to quit[0m
+2025-06-16 09:27:02,676 - INFO - Adding job tentatively -- it will be properly scheduled when the scheduler starts
+2025-06-16 09:27:02,680 - INFO - Added job "scheduled_scrape" to job store "default"
+2025-06-16 09:27:02,680 - INFO - Scheduler started
+2025-06-16 09:27:56,612 - INFO - Adding job tentatively -- it will be properly scheduled when the scheduler starts
+2025-06-16 09:27:56,617 - INFO - Added job "scheduled_scrape" to job store "default"
+2025-06-16 09:27:56,618 - INFO - Scheduler started
+2025-06-16 09:28:43,875 - INFO - 127.0.0.1 - - [16/Jun/2025 09:28:43] "GET / HTTP/1.1" 200 -
+2025-06-16 09:28:43,899 - INFO - 127.0.0.1 - - [16/Jun/2025 09:28:43] "[33mGET /static/android-icon-192x192.png HTTP/1.1[0m" 404 -
+2025-06-16 09:28:43,913 - INFO - 127.0.0.1 - - [16/Jun/2025 09:28:43] "[33mGET /static/android-icon-512x512.png HTTP/1.1[0m" 404 -
+2025-06-16 09:28:44,890 - INFO - 127.0.0.1 - - [16/Jun/2025 09:28:44] "[36mGET /static/manifest.json HTTP/1.1[0m" 304 -
+2025-06-16 09:30:24,735 - INFO - Database tables initialized
+2025-06-16 09:30:24,756 - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5000
+ * Running on http://192.168.0.106:5000
+2025-06-16 09:30:24,760 - INFO - [33mPress CTRL+C to quit[0m
+2025-06-16 09:32:03,278 - INFO - Adding job tentatively -- it will be properly scheduled when the scheduler starts
+2025-06-16 09:32:03,281 - INFO - Added job "scheduled_scrape" to job store "default"
+2025-06-16 09:32:03,281 - INFO - Scheduler started
+2025-06-16 09:32:29,774 - INFO - Adding job tentatively -- it will be properly scheduled when the scheduler starts
+2025-06-16 09:32:29,777 - INFO - Added job "scheduled_scrape" to job store "default"
+2025-06-16 09:32:29,777 - INFO - Scheduler started
+2025-06-16 09:32:44,978 - INFO - 127.0.0.1 - - [16/Jun/2025 09:32:44] "GET / HTTP/1.1" 200 -
+2025-06-16 09:32:45,021 - INFO - 127.0.0.1 - - [16/Jun/2025 09:32:45] "[33mGET /static/android-icon-192x192.png HTTP/1.1[0m" 404 -
+2025-06-16 09:32:45,028 - INFO - 127.0.0.1 - - [16/Jun/2025 09:32:45] "[33mGET /static/android-icon-512x512.png HTTP/1.1[0m" 404 -
+2025-06-16 09:32:46,477 - INFO - 127.0.0.1 - - [16/Jun/2025 09:32:46] "[36mGET /static/manifest.json HTTP/1.1[0m" 304 -
+2025-06-16 09:33:18,162 - INFO - 127.0.0.1 - - [16/Jun/2025 09:33:18] "GET / HTTP/1.1" 200 -
+2025-06-16 09:33:18,273 - INFO - 127.0.0.1 - - [16/Jun/2025 09:33:18] "[33mGET /static/android-icon-192x192.png HTTP/1.1[0m" 404 -
+2025-06-16 09:33:18,290 - INFO - 127.0.0.1 - - [16/Jun/2025 09:33:18] "[33mGET /static/android-icon-512x512.png HTTP/1.1[0m" 404 -
+2025-06-16 09:33:18,555 - INFO - 127.0.0.1 - - [16/Jun/2025 09:33:18] "[36mGET /static/manifest.json HTTP/1.1[0m" 304 -
+2025-06-16 09:33:18,559 - INFO - 127.0.0.1 - - [16/Jun/2025 09:33:18] "[36mGET /static/logo.png HTTP/1.1[0m" 304 -
+2025-06-16 09:50:52,459 - INFO - Database tables initialized
+2025-06-16 09:50:52,485 - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5000
+ * Running on http://192.168.0.106:5000
+2025-06-16 09:50:52,485 - INFO - [33mPress CTRL+C to quit[0m
+2025-06-16 09:52:13,829 - INFO - Adding job tentatively -- it will be properly scheduled when the scheduler starts
+2025-06-16 09:52:13,836 - INFO - Added job "scheduled_scrape" to job store "default"
+2025-06-16 09:52:13,837 - INFO - Scheduler started
+2025-06-16 09:52:13,837 - INFO - Running job "scheduled_scrape (trigger: cron[hour='9', minute='53'], next run at: 2025-06-16 09:53:00 IST)" (scheduled at 2025-06-16 09:52:13.824311+05:30)
+2025-06-16 09:52:14,594 - ERROR - Job "scheduled_scrape (trigger: cron[hour='9', minute='53'], next run at: 2025-06-16 09:53:00 IST)" raised an exception
+Traceback (most recent call last):
+  File "C:\Users\Admin\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\local-packages\Python311\site-packages\apscheduler\executors\base.py", line 131, in run_job
+    retval = job.func(*job.args, **job.kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Admin\Desktop\Application\News app\worker.py", line 119, in scheduled_scrape
+    db.session.remove()
+  File "C:\Users\Admin\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\local-packages\Python311\site-packages\sqlalchemy\orm\scoping.py", line 260, in remove
+    if self.registry.has():
+       ^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Admin\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\local-packages\Python311\site-packages\sqlalchemy\util\_collections.py", line 643, in has
+    return self.scopefunc() in self.registry
+           ^^^^^^^^^^^^^^^^
+  File "C:\Users\Admin\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\local-packages\Python311\site-packages\flask_sqlalchemy\session.py", line 111, in _app_ctx_id
+    return id(app_ctx._get_current_object())  # type: ignore[attr-defined]
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Admin\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\local-packages\Python311\site-packages\werkzeug\local.py", line 519, in _get_current_object
+    raise RuntimeError(unbound_message) from None
+RuntimeError: Working outside of application context.
+
+This typically means that you attempted to use functionality that needed
+the current application. To solve this, set up an application context
+with app.app_context(). See the documentation for more information.
+2025-06-16 09:53:00,007 - INFO - Running job "scheduled_scrape (trigger: cron[hour='9', minute='53'], next run at: 2025-06-17 09:53:00 IST)" (scheduled at 2025-06-16 09:53:00+05:30)
+2025-06-16 09:53:00,536 - ERROR - Job "scheduled_scrape (trigger: cron[hour='9', minute='53'], next run at: 2025-06-17 09:53:00 IST)" raised an exception
+Traceback (most recent call last):
+  File "C:\Users\Admin\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\local-packages\Python311\site-packages\apscheduler\executors\base.py", line 131, in run_job
+    retval = job.func(*job.args, **job.kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Admin\Desktop\Application\News app\worker.py", line 119, in scheduled_scrape
+    db.session.remove()
+  File "C:\Users\Admin\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\local-packages\Python311\site-packages\sqlalchemy\orm\scoping.py", line 260, in remove
+    if self.registry.has():
+       ^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Admin\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\local-packages\Python311\site-packages\sqlalchemy\util\_collections.py", line 643, in has
+    return self.scopefunc() in self.registry
+           ^^^^^^^^^^^^^^^^
+  File "C:\Users\Admin\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\local-packages\Python311\site-packages\flask_sqlalchemy\session.py", line 111, in _app_ctx_id
+    return id(app_ctx._get_current_object())  # type: ignore[attr-defined]
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Admin\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\local-packages\Python311\site-packages\werkzeug\local.py", line 519, in _get_current_object
+    raise RuntimeError(unbound_message) from None
+RuntimeError: Working outside of application context.
+
+This typically means that you attempted to use functionality that needed
+the current application. To solve this, set up an application context
+with app.app_context(). See the documentation for more information.
+2025-06-16 09:53:50,546 - INFO - Adding job tentatively -- it will be properly scheduled when the scheduler starts
+2025-06-16 09:53:50,550 - INFO - Added job "scheduled_scrape" to job store "default"
+2025-06-16 09:53:50,550 - INFO - Scheduler started
+2025-06-16 09:53:50,552 - INFO - Running job "scheduled_scrape (trigger: cron[hour='9', minute='55'], next run at: 2025-06-16 09:55:00 IST)" (scheduled at 2025-06-16 09:53:50.540099+05:30)
+2025-06-16 09:53:50,554 - INFO - Starting scheduled scrape...
+2025-06-16 09:53:51,156 - INFO - Added 0 new records, deleted 0 old ones
+2025-06-16 09:53:51,158 - INFO - Scraping completed in 0.60s
+2025-06-16 09:53:51,158 - INFO - Job "scheduled_scrape (trigger: cron[hour='9', minute='55'], next run at: 2025-06-16 09:55:00 IST)" executed successfully
+2025-06-16 09:54:07,703 - INFO - 127.0.0.1 - - [16/Jun/2025 09:54:07] "GET / HTTP/1.1" 200 -
+2025-06-16 09:54:07,890 - INFO - 127.0.0.1 - - [16/Jun/2025 09:54:07] "GET / HTTP/1.1" 200 -
+2025-06-16 09:54:07,954 - INFO - 127.0.0.1 - - [16/Jun/2025 09:54:07] "[33mGET /static/android-icon-192x192.png HTTP/1.1[0m" 404 -
+2025-06-16 09:54:07,978 - INFO - 127.0.0.1 - - [16/Jun/2025 09:54:07] "[33mGET /static/android-icon-512x512.png HTTP/1.1[0m" 404 -
+2025-06-16 09:54:08,873 - INFO - 127.0.0.1 - - [16/Jun/2025 09:54:08] "[36mGET /static/manifest.json HTTP/1.1[0m" 304 -
+2025-06-16 09:54:42,714 - INFO - 127.0.0.1 - - [16/Jun/2025 09:54:42] "GET / HTTP/1.1" 200 -
+2025-06-16 09:54:42,758 - INFO - 127.0.0.1 - - [16/Jun/2025 09:54:42] "[33mGET /static/android-icon-192x192.png HTTP/1.1[0m" 404 -
+2025-06-16 09:54:42,781 - INFO - 127.0.0.1 - - [16/Jun/2025 09:54:42] "[33mGET /static/android-icon-512x512.png HTTP/1.1[0m" 404 -
+2025-06-16 09:54:43,120 - INFO - 127.0.0.1 - - [16/Jun/2025 09:54:43] "[36mGET /static/manifest.json HTTP/1.1[0m" 304 -
+2025-06-16 09:54:43,121 - INFO - 127.0.0.1 - - [16/Jun/2025 09:54:43] "[36mGET /static/logo.png HTTP/1.1[0m" 304 -
+2025-06-16 09:55:00,002 - INFO - Running job "scheduled_scrape (trigger: cron[hour='9', minute='55'], next run at: 2025-06-17 09:55:00 IST)" (scheduled at 2025-06-16 09:55:00+05:30)
+2025-06-16 09:55:00,009 - INFO - Starting scheduled scrape...
+2025-06-16 09:55:00,487 - INFO - Added 0 new records, deleted 0 old ones
+2025-06-16 09:55:00,487 - INFO - Scraping completed in 0.49s
+2025-06-16 09:55:00,487 - INFO - Job "scheduled_scrape (trigger: cron[hour='9', minute='55'], next run at: 2025-06-17 09:55:00 IST)" executed successfully
+2025-06-16 09:55:46,558 - INFO - 127.0.0.1 - - [16/Jun/2025 09:55:46] "GET / HTTP/1.1" 200 -
+2025-06-16 09:55:46,650 - INFO - 127.0.0.1 - - [16/Jun/2025 09:55:46] "[33mGET /static/android-icon-192x192.png HTTP/1.1[0m" 404 -
+2025-06-16 09:55:46,668 - INFO - 127.0.0.1 - - [16/Jun/2025 09:55:46] "[33mGET /static/android-icon-512x512.png HTTP/1.1[0m" 404 -
+2025-06-16 09:55:46,860 - INFO - 127.0.0.1 - - [16/Jun/2025 09:55:46] "[36mGET /static/manifest.json HTTP/1.1[0m" 304 -
+2025-06-16 09:55:46,860 - INFO - 127.0.0.1 - - [16/Jun/2025 09:55:46] "[36mGET /static/logo.png HTTP/1.1[0m" 304 -
+2025-06-16 09:57:30,867 - INFO - Adding job tentatively -- it will be properly scheduled when the scheduler starts
+2025-06-16 09:57:30,867 - INFO - Added job "scheduled_scrape" to job store "default"
+2025-06-16 09:57:30,867 - INFO - Scheduler started
+2025-06-16 09:57:30,874 - INFO - Running job "scheduled_scrape (trigger: cron[hour='9', minute='58'], next run at: 2025-06-16 09:58:00 IST)" (scheduled at 2025-06-16 09:57:30.860190+05:30)
+2025-06-16 09:57:30,875 - INFO - Starting scheduled scrape...
+2025-06-16 09:57:30,875 - INFO - Fetching BBC News...
+2025-06-16 09:57:31,048 - INFO - BBC Status Code: 200
+2025-06-16 09:57:31,368 - INFO - Found 0 BBC articles
+2025-06-16 09:57:31,614 - INFO - Added 0 new records, deleted 0 old ones
+2025-06-16 09:57:31,614 - INFO - Scraping completed in 0.74s
+2025-06-16 09:57:31,622 - INFO - Job "scheduled_scrape (trigger: cron[hour='9', minute='58'], next run at: 2025-06-16 09:58:00 IST)" executed successfully
+2025-06-16 09:58:00,003 - INFO - Running job "scheduled_scrape (trigger: cron[hour='9', minute='58'], next run at: 2025-06-17 09:58:00 IST)" (scheduled at 2025-06-16 09:58:00+05:30)
+2025-06-16 09:58:00,006 - INFO - Starting scheduled scrape...
+2025-06-16 09:58:00,023 - INFO - Fetching BBC News...
+2025-06-16 09:58:00,164 - INFO - BBC Status Code: 200
+2025-06-16 09:58:00,649 - INFO - Found 0 BBC articles
+2025-06-16 09:58:00,758 - INFO - Added 0 new records, deleted 0 old ones
+2025-06-16 09:58:00,759 - INFO - Scraping completed in 0.75s
+2025-06-16 09:58:00,759 - INFO - Job "scheduled_scrape (trigger: cron[hour='9', minute='58'], next run at: 2025-06-17 09:58:00 IST)" executed successfully
