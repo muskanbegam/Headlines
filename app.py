@@ -139,84 +139,132 @@ def scheduled_scrape():
         now = datetime.now(kolkata_tz)
         print(f"[{now}] Running scheduled scrape in Kolkata time...")
         
+        # List to store all scraped articles before filtering duplicates
+        all_articles = []
+        
+        # BBC Scraping - get 6 articles
         bbc_url = "https://www.bbc.com/news"
         bbc_html = requests.get(bbc_url).text
         bbc_soup = BeautifulSoup(bbc_html, "html.parser")
         bbc_cards = bbc_soup.find_all("div", class_="sc-cb78bbba-1 fYSNbR")
 
-        for bbc_card in bbc_cards[:5]:
-            bbc_img_tag = bbc_card.find("div").find("img", class_="sc-d1200759-0 dvfjxj")
-            bbc_img_url = bbc_img_tag.get("src") if bbc_img_tag else "Image not found"
+        for bbc_card in bbc_cards[:6]:  # Get 6 BBC articles
+            try:
+                bbc_img_tag = bbc_card.find("div").find("img", class_="sc-d1200759-0 dvfjxj")
+                bbc_img_url = bbc_img_tag.get("src") if bbc_img_tag else "Image not found"
 
-            bbc_heading = bbc_card.find("h2", class_="sc-9d830f2a-3 fWzToZ")
-            bbc_heading_text = bbc_heading.get_text(strip=True) if bbc_heading else "Untitled"
+                bbc_heading = bbc_card.find("h2", class_="sc-9d830f2a-3 fWzToZ")
+                bbc_heading_text = bbc_heading.get_text(strip=True) if bbc_heading else "Untitled"
 
-            bbc_meta_div = bbc_card.find("div", class_="sc-ac6bc755-0 kOnnpG")
-            bbc_date = bbc_meta_div.get_text(separator=" · ", strip=True) if bbc_meta_div else "Unknown metadata"
+                # Skip if this article already exists
+                if Content.query.filter_by(heading=bbc_heading_text).first():
+                    continue
 
-            bbc_date_span = bbc_card.find("span", class_="sc-ac6bc755-2 ivCQgh")
-            bbc_loc = bbc_date_span.get_text(strip=True) if bbc_date_span else "Unknown date"
+                bbc_meta_div = bbc_card.find("div", class_="sc-ac6bc755-0 kOnnpG")
+                bbc_date = bbc_meta_div.get_text(separator=" · ", strip=True) if bbc_meta_div else "Unknown metadata"
 
+                bbc_date_span = bbc_card.find("span", class_="sc-ac6bc755-2 ivCQgh")
+                bbc_loc = bbc_date_span.get_text(strip=True) if bbc_date_span else "Unknown date"
 
-            anchor_tag = bbc_card.find_parent("a", href=True)
-            bbc_href = anchor_tag['href'] if anchor_tag else ""
-            bbc_external_url = "https://www.bbc.com" + bbc_href if bbc_href.startswith("/") else bbc_href
+                anchor_tag = bbc_card.find_parent("a", href=True)
+                bbc_href = anchor_tag['href'] if anchor_tag else ""
+                bbc_external_url = "https://www.bbc.com" + bbc_href if bbc_href.startswith("/") else bbc_href
 
-            bbc_content_text = get_bbc_full_article_content(bbc_external_url)
-            if len(bbc_content_text) > 424:
-                bbc_content_text = bbc_content_text[:423] + '...'
-            bbc_lat, bbc_lon = get_lat_long(bbc_loc)
+                bbc_content_text = get_bbc_full_article_content(bbc_external_url)
+                if len(bbc_content_text) > 424:
+                    bbc_content_text = bbc_content_text[:423] + '...'
+                bbc_lat, bbc_lon = get_lat_long(bbc_loc)
 
-            db.session.add(Content(
-                heading=bbc_heading_text,
-                subheading=bbc_date,
-                content=bbc_content_text[:427],
-                link=bbc_external_url,
-                location=bbc_loc,
-                image=bbc_img_url,
-                latitude=bbc_lat,
-                longitude=bbc_lon,
-            ))
+                all_articles.append({
+                    'source': 'BBC',
+                    'heading': bbc_heading_text,
+                    'subheading': bbc_date,
+                    'content': bbc_content_text[:427],
+                    'link': bbc_external_url,
+                    'location': bbc_loc,
+                    'image': bbc_img_url,
+                    'latitude': bbc_lat,
+                    'longitude': bbc_lon,
+                })
+            except Exception as e:
+                print(f"Error processing BBC article: {e}")
+                continue
+
+        # Inshorts Scraping - get 5 articles
         url = "https://inshorts.com/en/read"
         html = requests.get(url).text
         soup = BeautifulSoup(html, "html.parser")
 
         cards = soup.find_all("div", class_="LUWdd1C_3UqqulVsopn0")
-        for card in cards[:6]:
-            bg_div = card.find_previous_sibling("div").find("div", class_="GXPWASMx93K0ajwCIcCA")
-            img_url = "https://via.placeholder.com/300"
-            if bg_div and "style" in bg_div.attrs:
-                m = re.search(r'url\(([^)]+)\)', bg_div["style"])
-                if m:
-                    img_url = m.group(1).strip('"').strip("'")
+        for card in cards[:5]:  # Get 5 Inshorts articles
+            try:
+                bg_div = card.find_previous_sibling("div").find("div", class_="GXPWASMx93K0ajwCIcCA")
+                img_url = "https://via.placeholder.com/300"
+                if bg_div and "style" in bg_div.attrs:
+                    m = re.search(r'url\(([^)]+)\)', bg_div["style"])
+                    if m:
+                        img_url = m.group(1).strip('"').strip("'")
 
-            heading = card.find("span", class_="ddVzQcwl2yPlFt4fteIE")
-            heading_text = heading.get_text(strip=True) if heading else "Untitled"
+                heading = card.find("span", class_="ddVzQcwl2yPlFt4fteIE")
+                heading_text = heading.get_text(strip=True) if heading else "Untitled"
 
-            date_span = card.find("span", class_="date")
-            date = date_span.get_text(strip=True) if date_span else "Unknown date"
+                # Skip if this article already exists
+                if Content.query.filter_by(heading=heading_text).first():
+                    continue
 
-            content = card.find("div", class_="KkupEonoVHxNv4A_D7UG")
-            content_text = content.get_text(strip=True) if content else "No content"
+                date_span = card.find("span", class_="date")
+                date = date_span.get_text(strip=True) if date_span else "Unknown date"
 
-            source_link = card.find("a", class_="LFn0sRS51HkFD0OHeCdA")
-            external_url = source_link["href"] if source_link and source_link.has_attr("href") else "#"
-            lat, lon = get_lat_long("India")
+                content = card.find("div", class_="KkupEonoVHxNv4A_D7UG")
+                content_text = content.get_text(strip=True) if content else "No content"
 
-            db.session.add(Content(
-                heading=heading_text,
-                subheading=date,
-                content=content_text[:427],
-                link=external_url,
-                location="India",
-                image=img_url,
-                latitude=lat,
-                longitude=lon,
-            ))
+                source_link = card.find("a", class_="LFn0sRS51HkFD0OHeCdA")
+                external_url = source_link["href"] if source_link and source_link.has_attr("href") else "#"
+                lat, lon = get_lat_long("India")
 
-        db.session.commit()
-        print("✅ Scraping finished and content saved.")
-        
+                all_articles.append({
+                    'source': 'Inshorts',
+                    'heading': heading_text,
+                    'subheading': date,
+                    'content': content_text[:427],
+                    'link': external_url,
+                    'location': "India",
+                    'image': img_url,
+                    'latitude': lat,
+                    'longitude': lon,
+                })
+            except Exception as e:
+                print(f"Error processing Inshorts article: {e}")
+                continue
+
+        # Add articles to database
+        added_count = 0
+        for article in all_articles:
+            try:
+                # Double-check for duplicates before adding (race condition protection)
+                if not Content.query.filter_by(heading=article['heading']).first():
+                    db.session.add(Content(
+                        heading=article['heading'],
+                        subheading=article['subheading'],
+                        content=article['content'],
+                        link=article['link'],
+                        location=article['location'],
+                        image=article['image'],
+                        latitude=article['latitude'],
+                        longitude=article['longitude'],
+                        timestamp=datetime.now(kolkata_tz)
+                    ))
+                    added_count += 1
+            except Exception as e:
+                db.session.rollback()
+                print(f"Error adding article {article['heading']}: {e}")
+
+        try:
+            db.session.commit()
+            print(f"✅ Added {added_count} new articles. Scraping finished.")
+        except Exception as e:
+            db.session.rollback()
+            print(f"❌ Error committing to database: {e}")
 
 # Initialize APScheduler
 scheduler = APScheduler()
@@ -226,7 +274,7 @@ scheduler.add_job(
     id='news_scraping_job',
     func=scheduled_scrape,
     trigger='cron',
-    hour=10,  # 10 AM Kolkata time
+    hour=7,  # 10 AM Kolkata time
     minute=50,
     timezone=kolkata_tz  # Explicitly set timezone
 )
