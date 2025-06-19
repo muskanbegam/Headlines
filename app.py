@@ -141,55 +141,6 @@ def scheduled_scrape():
         
         # List to store all scraped articles before filtering duplicates
         all_articles = []
-        
-        # BBC Scraping - get 6 articles
-        bbc_url = "https://www.bbc.com/news"
-        bbc_html = requests.get(bbc_url).text
-        bbc_soup = BeautifulSoup(bbc_html, "html.parser")
-        bbc_cards = bbc_soup.find_all("div", class_="sc-cb78bbba-1 fYSNbR")
-
-        for bbc_card in bbc_cards[:6]:  # Get 6 BBC articles
-            try:
-                bbc_img_tag = bbc_card.find("div").find("img", class_="sc-d1200759-0 dvfjxj")
-                bbc_img_url = bbc_img_tag.get("src") if bbc_img_tag else "Image not found"
-
-                bbc_heading = bbc_card.find("h2", class_="sc-9d830f2a-3 fWzToZ")
-                bbc_heading_text = bbc_heading.get_text(strip=True) if bbc_heading else "Untitled"
-
-                # Skip if this article already exists
-                if Content.query.filter_by(heading=bbc_heading_text).first():
-                    continue
-
-                bbc_meta_div = bbc_card.find("div", class_="sc-ac6bc755-0 kOnnpG")
-                bbc_date = bbc_meta_div.get_text(separator=" · ", strip=True) if bbc_meta_div else "Unknown metadata"
-
-                bbc_date_span = bbc_card.find("span", class_="sc-ac6bc755-2 ivCQgh")
-                bbc_loc = bbc_date_span.get_text(strip=True) if bbc_date_span else "Unknown date"
-
-                anchor_tag = bbc_card.find_parent("a", href=True)
-                bbc_href = anchor_tag['href'] if anchor_tag else ""
-                bbc_external_url = "https://www.bbc.com" + bbc_href if bbc_href.startswith("/") else bbc_href
-
-                bbc_content_text = get_bbc_full_article_content(bbc_external_url)
-                if len(bbc_content_text) > 424:
-                    bbc_content_text = bbc_content_text[:423] + '...'
-                bbc_lat, bbc_lon = get_lat_long(bbc_loc)
-
-                all_articles.append({
-                    'source': 'BBC',
-                    'heading': bbc_heading_text,
-                    'subheading': bbc_date,
-                    'content': bbc_content_text[:427],
-                    'link': bbc_external_url,
-                    'location': bbc_loc,
-                    'image': bbc_img_url,
-                    'latitude': bbc_lat,
-                    'longitude': bbc_lon,
-                })
-            except Exception as e:
-                print(f"Error processing BBC article: {e}")
-                continue
-
         # Inshorts Scraping - get 5 articles
         url = "https://inshorts.com/en/read"
         html = requests.get(url).text
@@ -259,6 +210,55 @@ def scheduled_scrape():
                 db.session.rollback()
                 print(f"Error adding article {article['heading']}: {e}")
 
+        # BBC Scraping - get 6 articles
+        bbc_url = "https://www.bbc.com/news"
+        bbc_html = requests.get(bbc_url).text
+        bbc_soup = BeautifulSoup(bbc_html, "html.parser")
+        bbc_cards = bbc_soup.find_all("div", class_="sc-cb78bbba-1 fYSNbR")
+
+        for bbc_card in bbc_cards[:6]:  # Get 6 BBC articles
+            try:
+                bbc_img_tag = bbc_card.find("div").find("img", class_="sc-d1200759-0 dvfjxj")
+                bbc_img_url = bbc_img_tag.get("src") if bbc_img_tag else "Image not found"
+
+                bbc_heading = bbc_card.find("h2", class_="sc-9d830f2a-3 fWzToZ")
+                bbc_heading_text = bbc_heading.get_text(strip=True) if bbc_heading else "Untitled"
+
+                # Skip if this article already exists
+                if Content.query.filter_by(heading=bbc_heading_text).first():
+                    continue
+
+                bbc_meta_div = bbc_card.find("div", class_="sc-ac6bc755-0 kOnnpG")
+                bbc_date = bbc_meta_div.get_text(separator=" · ", strip=True) if bbc_meta_div else "Unknown metadata"
+
+                bbc_date_span = bbc_card.find("span", class_="sc-ac6bc755-2 ivCQgh")
+                bbc_loc = bbc_date_span.get_text(strip=True) if bbc_date_span else "Unknown date"
+
+                anchor_tag = bbc_card.find_parent("a", href=True)
+                bbc_href = anchor_tag['href'] if anchor_tag else ""
+                bbc_external_url = "https://www.bbc.com" + bbc_href if bbc_href.startswith("/") else bbc_href
+
+                bbc_content_text = get_bbc_full_article_content(bbc_external_url)
+                if len(bbc_content_text) > 424:
+                    bbc_content_text = bbc_content_text[:423] + '...'
+                bbc_lat, bbc_lon = get_lat_long(bbc_loc)
+
+                all_articles.append({
+                    'source': 'BBC',
+                    'heading': bbc_heading_text,
+                    'subheading': bbc_date,
+                    'content': bbc_content_text[:427],
+                    'link': bbc_external_url,
+                    'location': bbc_loc,
+                    'image': bbc_img_url,
+                    'latitude': bbc_lat,
+                    'longitude': bbc_lon,
+                })
+            except Exception as e:
+                print(f"Error processing BBC article: {e}")
+                continue
+
+        
         try:
             db.session.commit()
             print(f"✅ Added {added_count} new articles. Scraping finished.")
@@ -275,7 +275,7 @@ scheduler.add_job(
     func=scheduled_scrape,
     trigger='cron',
     hour=8,  # 10 AM Kolkata time
-    minute=30,
+    minute=1,
     timezone=kolkata_tz  # Explicitly set timezone
 )
 
@@ -291,17 +291,25 @@ def home():
 
 @app.route("/login", methods=["GET", "POST"])
 def login():
-    if request.method == "POST":
-        email    = request.form.get("email")
-        password = request.form.get("password")
-        if email == "admin@gmail.com" and password == "(Adminnewsight.1)":
-            content_db = Content.query.all()
-            return render_template("admin-dashboard.html", data=content_db, length=len(content_db))
-        user = Users.query.filter_by(email=email).first()
-        if user and user.password == password:
-            return redirect(url_for("logged_in", so=1))
-        return render_template("login.html", error="Invalid credentials.")
-    return render_template("login.html")
+    try:
+        if request.method == "POST":
+            email    = request.form.get("email")
+            password = request.form.get("password")
+            if email == "admin@gmail.com" and password == "(Adminnewsight.1)":
+                # DEBUG LOGGING
+                print("Admin login triggered.")
+                content_db = Content.query.all()  # 🔥 likely causing crash
+                print("Fetched content:", content_db)
+                return render_template("admin-dashboard.html", data=content_db, length=len(content_db))
+            user = Users.query.filter_by(email=email).first()
+            if user and user.password == password:
+                return redirect(url_for("logged_in", so=1))
+            return render_template("login.html", error="Invalid credentials.")
+        return render_template("login.html")
+    except Exception as e:
+        print("💥 ERROR:", e)
+        return f"Server Error: {e}"
+
 
 @app.route("/loggedIn/<int:so>")
 def logged_in(so: int):

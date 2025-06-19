@@ -48,8 +48,8 @@
         Sign In
       </a>
       {% else %}
-      <a href="{{ url_for('loggedIn', so=0) }}"
-        class="text-lg font-semibold text-black hover:text-red-600 transition mb-4">
+      <a href="{{ url_for('logged_in', so=0) }}"
+        class="text-lg font-semibold text-white hover:text-red-600 transition mb-4">
         Log Out
       </a>
       {% endif %}
