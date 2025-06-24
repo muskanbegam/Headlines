@@ -336,8 +336,8 @@ scheduler.add_job(
     id='news_scraping_job',
     func=scheduled_scrape,
     trigger='cron',
-    hour=13,  # 10 AM Kolkata time
-    minute=35   ,
+    hour=18,  # 10 AM Kolkata time
+    minute=45   ,
     timezone=kolkata_tz  # Explicitly set timezone
 )
 
