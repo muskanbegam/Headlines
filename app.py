@@ -336,8 +336,8 @@ scheduler.add_job(
     id='news_scraping_job',
     func=scheduled_scrape,
     trigger='cron',
-    hour=14,  # 10 AM Kolkata time
-    minute=40,
+    hour=13,  # 10 AM Kolkata time
+    minute=35   ,
     timezone=kolkata_tz  # Explicitly set timezone
 )
 
@@ -371,7 +371,7 @@ def login():
     except Exception as e:
         print("💥 ERROR:", e)
         return f"Server Error: {e}"
-
+     
 
 @app.route("/loggedIn/<int:so>")
 def logged_in(so: int):
